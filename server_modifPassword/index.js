@@ -23,11 +23,19 @@ console.log("Variables d'environnement:", {
   API_URL: process.env.API_URL,
 });
 
+// Nettoyage des URLs
+const cleanUrls = (urls) => {
+  return urls
+    .split(",")
+    .map((url) => url.trim())
+    .filter((url) => url);
+};
+
 // Configuration CORS plus détaillée
 const corsOptions = {
   origin: function (origin, callback) {
     console.log("Origine de la requête:", origin);
-    const allowedOrigins = process.env.CLIENT_URL.split(",");
+    const allowedOrigins = cleanUrls(process.env.CLIENT_URL);
     console.log("Origines autorisées:", allowedOrigins);
 
     if (!origin || allowedOrigins.includes(origin)) {
@@ -90,7 +98,7 @@ app.get("/", (req, res) => {
 });
 
 // Route catch-all pour le frontend
-app.get("/*", (req, res) => {
+app.get("/", (req, res) => {
   console.log("Route catch-all atteinte pour:", req.url);
   res.sendFile(
     path.join(__DIRNAME, "client_modifPassword", "dist", "index.html")

@@ -36,7 +36,7 @@ console.log("CLIENT_URL:", process.env.CLIENT_URL);
 app.use("/api", routes);
 
 // Route catch-all en dernier
-app.get("*", (req, res) => {
+app.get("/", (req, res) => {
   console.log("Route catch-all atteinte pour:", req.url);
   res.sendFile(
     path.join(__DIRNAME, "client_modifPassword", "dist", "index.html")

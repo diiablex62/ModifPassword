@@ -82,8 +82,15 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Erreur interne du serveur" });
 });
 
-// Route catch-all en dernier
-app.get("*", (req, res) => {
+// Routes pour le frontend
+app.get("/", (req, res) => {
+  res.sendFile(
+    path.join(__DIRNAME, "client_modifPassword", "dist", "index.html")
+  );
+});
+
+// Route catch-all pour le frontend
+app.get("/*", (req, res) => {
   console.log("Route catch-all atteinte pour:", req.url);
   res.sendFile(
     path.join(__DIRNAME, "client_modifPassword", "dist", "index.html")

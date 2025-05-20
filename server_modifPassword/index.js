@@ -16,31 +16,51 @@ app.set("trust proxy", 1);
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL.split(","),
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    credentials: true,
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "Accept",
-      "Origin",
-    ],
-    exposedHeaders: ["Content-Range", "X-Content-Range"],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-  })
-);
+// Log des variables d'environnement
+console.log("Variables d'environnement:", {
+  NODE_ENV: process.env.NODE_ENV,
+  CLIENT_URL: process.env.CLIENT_URL,
+  API_URL: process.env.API_URL,
+});
 
-// Ajout d'un middleware pour logger les requêtes CORS
+// Configuration CORS plus détaillée
+const corsOptions = {
+  origin: function (origin, callback) {
+    console.log("Origine de la requête:", origin);
+    const allowedOrigins = process.env.CLIENT_URL.split(",");
+    console.log("Origines autorisées:", allowedOrigins);
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log("Origine non autorisée:", origin);
+      callback(new Error("Non autorisé par CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+  ],
+  exposedHeaders: ["Content-Range", "X-Content-Range"],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+};
+
+app.use(cors(corsOptions));
+
+// Middleware pour logger toutes les requêtes
 app.use((req, res, next) => {
   console.log("Requête reçue:", {
     method: req.method,
     path: req.path,
     origin: req.headers.origin,
     headers: req.headers,
+    ip: req.ip,
   });
   next();
 });
@@ -53,10 +73,6 @@ const { generalLimiter } = require("./middlewares/rateLimitMiddleware");
 
 app.use(generalLimiter);
 
-// Log pour vérifier l'URL du client
-console.log("CLIENT_URL:", process.env.CLIENT_URL);
-console.log("Origines autorisées:", process.env.CLIENT_URL.split(","));
-
 // Routes API d'abord
 app.use("/api", routes);
 
@@ -67,7 +83,7 @@ app.use((err, req, res, next) => {
 });
 
 // Route catch-all en dernier
-app.get("/", (req, res) => {
+app.get("*", (req, res) => {
   console.log("Route catch-all atteinte pour:", req.url);
   res.sendFile(
     path.join(__DIRNAME, "client_modifPassword", "dist", "index.html")
@@ -85,6 +101,7 @@ mongoose
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Serveur démarré sur le port ${PORT}`);
+  console.log("Configuration CORS:", corsOptions);
 });
 
 // localhost:3000

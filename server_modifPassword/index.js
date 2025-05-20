@@ -38,7 +38,9 @@ const corsOptions = {
     const allowedOrigins = cleanUrls(process.env.CLIENT_URL);
     console.log("Origines autorisées:", allowedOrigins);
 
+    // En production, accepter les requêtes sans origine (comme les appels API)
     if (!origin || allowedOrigins.includes(origin)) {
+      console.log("Origine autorisée:", origin);
       callback(null, true);
     } else {
       console.log("Origine non autorisée:", origin);
@@ -53,11 +55,18 @@ const corsOptions = {
     "X-Requested-With",
     "Accept",
     "Origin",
+    "Access-Control-Allow-Origin",
+    "Access-Control-Allow-Headers",
+    "Access-Control-Allow-Methods",
   ],
   exposedHeaders: ["Content-Range", "X-Content-Range"],
   preflightContinue: false,
   optionsSuccessStatus: 204,
+  maxAge: 86400, // 24 heures
 };
+
+// Ajout d'un middleware pour gérer les requêtes OPTIONS
+app.options("*", cors(corsOptions));
 
 app.use(cors(corsOptions));
 
@@ -70,6 +79,17 @@ app.use((req, res, next) => {
     headers: req.headers,
     ip: req.ip,
   });
+  // Ajout des en-têtes CORS manuellement pour plus de sécurité
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With, Accept, Origin"
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
   next();
 });
 

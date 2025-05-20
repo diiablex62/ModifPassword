@@ -29,11 +29,18 @@ const { generalLimiter } = require("./middlewares/rateLimitMiddleware");
 
 app.use(generalLimiter);
 
-app.use(routes);
+// Log pour vérifier l'URL du client
+console.log("CLIENT_URL:", process.env.CLIENT_URL);
 
-// pour le build
+// Routes API d'abord
+app.use("/api", routes);
+
+// Route catch-all en dernier
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__DIRNAME, "client_modifPassword", "dist", "index.html"));
+  console.log("Route catch-all atteinte pour:", req.url);
+  res.sendFile(
+    path.join(__DIRNAME, "client_modifPassword", "dist", "index.html")
+  );
 });
 
 mongoose

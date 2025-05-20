@@ -25,20 +25,51 @@ console.log("Variables d'environnement:", {
 
 // Nettoyage des URLs
 const cleanUrls = (urls) => {
-  return urls
+  if (!urls) {
+    console.log("Aucune URL fournie");
+    return [];
+  }
+
+  console.log("URLs avant nettoyage:", urls);
+
+  const cleanedUrls = urls
     .split(",")
-    .map((url) => url.trim())
+    .map((url) => {
+      const trimmedUrl = url.trim();
+      // Ajouter https:// si le protocole est manquant
+      if (
+        trimmedUrl &&
+        !trimmedUrl.startsWith("http://") &&
+        !trimmedUrl.startsWith("https://")
+      ) {
+        return `https://${trimmedUrl}`;
+      }
+      return trimmedUrl;
+    })
     .filter((url) => url);
+
+  console.log("URLs après nettoyage:", cleanedUrls);
+  return cleanedUrls;
 };
 
 // Configuration CORS plus détaillée
 const corsOptions = {
   origin: function (origin, callback) {
     console.log("Origine de la requête:", origin);
-    const allowedOrigins = cleanUrls(process.env.CLIENT_URL);
+
+    // En production, accepter toutes les requêtes
+    if (process.env.NODE_ENV === "production") {
+      console.log("Mode production - toutes les origines acceptées");
+      callback(null, true);
+      return;
+    }
+
+    // En développement, vérifier l'origine
+    const allowedOrigins = process.env.CLIENT_URL
+      ? [process.env.CLIENT_URL]
+      : ["http://localhost:5173"];
     console.log("Origines autorisées:", allowedOrigins);
 
-    // En production, accepter les requêtes sans origine (comme les appels API)
     if (!origin || allowedOrigins.includes(origin)) {
       console.log("Origine autorisée:", origin);
       callback(null, true);

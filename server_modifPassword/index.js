@@ -36,19 +36,30 @@ const cleanUrls = (urls) => {
     .split(",")
     .map((url) => {
       const trimmedUrl = url.trim();
+      console.log("URL en cours de traitement:", trimmedUrl);
+
+      // Vérifier si l'URL est valide
+      if (!trimmedUrl) {
+        console.log("URL vide ignorée");
+        return null;
+      }
+
       // Ajouter https:// si le protocole est manquant
       if (
-        trimmedUrl &&
         !trimmedUrl.startsWith("http://") &&
         !trimmedUrl.startsWith("https://")
       ) {
-        return `https://${trimmedUrl}`;
+        const urlWithProtocol = `https://${trimmedUrl}`;
+        console.log("URL avec protocole ajouté:", urlWithProtocol);
+        return urlWithProtocol;
       }
+
+      console.log("URL valide conservée:", trimmedUrl);
       return trimmedUrl;
     })
     .filter((url) => url);
 
-  console.log("URLs après nettoyage:", cleanedUrls);
+  console.log("URLs finales après nettoyage:", cleanedUrls);
   return cleanedUrls;
 };
 
@@ -57,24 +68,32 @@ const corsOptions = {
   origin: function (origin, callback) {
     console.log("Origine de la requête:", origin);
 
-    // En production, accepter toutes les requêtes
+    // En production, utiliser les URLs nettoyées
     if (process.env.NODE_ENV === "production") {
-      console.log("Mode production - toutes les origines acceptées");
-      callback(null, true);
+      const allowedOrigins = cleanUrls(process.env.CLIENT_URL);
+      console.log("Mode production - origines autorisées:", allowedOrigins);
+
+      if (!origin || allowedOrigins.includes(origin)) {
+        console.log("Origine autorisée en production:", origin);
+        callback(null, true);
+      } else {
+        console.log("Origine non autorisée en production:", origin);
+        callback(new Error("Non autorisé par CORS"));
+      }
       return;
     }
 
     // En développement, vérifier l'origine
     const allowedOrigins = process.env.CLIENT_URL
-      ? [process.env.CLIENT_URL]
+      ? cleanUrls(process.env.CLIENT_URL)
       : ["http://localhost:5173"];
-    console.log("Origines autorisées:", allowedOrigins);
+    console.log("Origines autorisées en développement:", allowedOrigins);
 
     if (!origin || allowedOrigins.includes(origin)) {
-      console.log("Origine autorisée:", origin);
+      console.log("Origine autorisée en développement:", origin);
       callback(null, true);
     } else {
-      console.log("Origine non autorisée:", origin);
+      console.log("Origine non autorisée en développement:", origin);
       callback(new Error("Non autorisé par CORS"));
     }
   },
